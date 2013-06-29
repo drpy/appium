@@ -270,11 +270,14 @@ ADB.prototype.insertManifest = function(manifest, srcApk, dstApk, cb) {
   var moveManifest = function(cb) {
     if (isWindows) {
       try {
+        var manifestBasename = path.basename(manifest);
         var existingAPKzip = new AdmZip(dstApk);
         var newAPKzip = new AdmZip();
         existingAPKzip.getEntries().forEach(function(entry) {
           var entryName = entry.entryName;
-          newAPKzip.addZipEntryComment(entry, entryName);
+          if (entryName.indexOf(manifestBasename) < 0) {
+            newAPKzip.addFile(entryName, entry.getData(), entry.comment, entry.attr);
+          }
         });
         newAPKzip.addLocalFile(manifest);
         newAPKzip.writeZip(dstApk);
