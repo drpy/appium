@@ -268,40 +268,24 @@ ADB.prototype.insertManifest = function(manifest, srcApk, dstApk, cb) {
   };
 
   var moveManifest = function(cb) {
+    var replaceCmd;
     if (isWindows) {
-      try {
-        var manifestBasename = path.basename(manifest);
-        var existingAPKzip = new AdmZip(dstApk);
-        var newAPKzip = new AdmZip();
-        existingAPKzip.getEntries().forEach(function(entry) {
-          var entryName = entry.entryName;
-          if (entryName.indexOf(manifestBasename) < 0) {
-            newAPKzip.addFile(entryName, entry.getData(), entry.comment, entry.attr);
-          }
-        });
-        newAPKzip.addLocalFile(manifest);
-        newAPKzip.writeZip(dstApk);
-        logger.debug("Inserted manifest.");
-        cb(null);
-      } catch(err) {
-        logger.info("Got error moving manifest: " + err);
-        cb(err);
-      }
+      replaceCmd = '7z.exe u -tzip "' + dstApk + '" "' + manifest + '"';
     } else {
       // Insert compiled manifest into /tmp/appPackage.clean.apk
       // -j = keep only the file, not the dirs
       // -m = move manifest into target apk.
-      var replaceCmd = 'zip -j -m "' + dstApk + '" "' + manifest + '"';
-      logger.debug("Moving manifest with: " + replaceCmd);
-      exec(replaceCmd, { maxBuffer: 524288 }, function(err) {
-        if (err) {
-          logger.info("Got error moving manifest: " + err);
-          return cb(err);
-        }
-        logger.debug("Inserted manifest.");
-        cb(null);
-      });
+      replaceCmd = 'zip -j -m "' + dstApk + '" "' + manifest + '"';
     }
+    logger.debug("Moving manifest with: " + replaceCmd);
+    exec(replaceCmd, { maxBuffer: 524288 }, function(err) {
+      if (err) {
+        logger.info("Got error moving manifest: " + err);
+        return cb(err);
+      }
+      logger.debug("Inserted manifest.");
+      cb(null);
+      });
   };
 
   async.series([
