@@ -79,7 +79,7 @@ ADB.prototype.checkSdkBinaryPresent = function(binary, cb) {
     if (binaryName === "android") {
       binaryName += ".bat";
     } else {
-      if (binaryName.indexOf(".exe", binaryName.length - 4) == -1) {
+      if (binaryName.indexOf(".exe", binaryName.length - 4) === -1) {
         binaryName += ".exe";
       }
     }
@@ -585,9 +585,19 @@ ADB.prototype.startAppium = function(onReady, onExit) {
     function(cb) { me.wakeUp(cb); },
     function(cb) { me.unlockScreen(cb); },
     function(cb) { me.startApp(cb); }
-  ], function(err) {
-    onReady(err);
-  });
+  ], onReady);
+};
+
+ADB.prototype.startChrome = function(onReady) {
+  logger.info("Starting Chrome");
+  var me = this;
+  logger.debug("Using fast reset? " + this.fastReset);
+
+  async.series([
+    function(cb) { me.prepareDevice(cb); },
+    function(cb) { me.installApp(cb); },
+    function(cb) { me.startApp(cb); }
+  ], onReady);
 };
 
 ADB.prototype.startSelendroid = function(serverPath, onReady) {
