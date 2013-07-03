@@ -1307,7 +1307,7 @@ IOS.prototype.elementEnabled = function(elementId, cb) {
       this.executeAtom('is_enabled', [atomsElement], cb);
     }, this));
   } else {
-    var command = ["au.getElement('", elementId, "').isEnabled()"].join('');
+    var command = ["au.getElement('", elementId, "').isEnabled() === 1"].join('');
     this.proxy(command, cb);
   }
 };
@@ -1509,7 +1509,8 @@ IOS.prototype.flick = function(startX, startY, endX, endY, touchCount, elId, cb)
   this.proxy(command, cb);
 };
 
-IOS.prototype.scrollTo = function(elementId, cb) {
+IOS.prototype.scrollTo = function(elementId, text, cb) {
+    // we ignore text for iOS, as the element is the one being scrolled too
     var command = ["au.getElement('", elementId, "').scrollToVisible()"].join('');
     this.proxy(command, cb);
 };
@@ -1941,17 +1942,17 @@ IOS.prototype.getCurrentActivity= function(cb) {
 };
 
 IOS.prototype.isAppInstalled = function(bundleId, cb) {
-  var isInstalledCommand = './submodules/fruitstrap/fruitstrap isInstalled --id ' + this.udid + ' --bundle ' + bundleId;
+  var isInstalledCommand = 'build/fruitstrap/fruitstrap isInstalled --id ' + this.udid + ' --bundle ' + bundleId;
   deviceCommon.isAppInstalled(isInstalledCommand, cb);
 };
 
 IOS.prototype.removeApp = function(bundleId, cb) {
-  var removeCommand = './submodules/fruitstrap/fruitstrap uninstall --id ' + this.udid + ' --bundle ' + bundleId;
+  var removeCommand = 'build/fruitstrap/fruitstrap uninstall --id ' + this.udid + ' --bundle ' + bundleId;
   deviceCommon.removeApp(removeCommand, this.udid, bundleId, cb);
 };
 
 IOS.prototype.installApp = function(unzippedAppPath, cb) {
-  var installationCommand = './submodules/fruitstrap/fruitstrap install --id ' + this.udid + ' --bundle ' + unzippedAppPath;
+  var installationCommand = 'build/fruitstrap/fruitstrap install --id ' + this.udid + ' --bundle ' + unzippedAppPath;
   deviceCommon.installApp(installationCommand, this.udid, unzippedAppPath, cb);
 };
 

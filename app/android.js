@@ -405,11 +405,19 @@ Android.prototype.handleFindCb = function(err, res, many, findCb) {
 };
 
 Android.prototype.findElementFromElement = function(element, strategy, selector, cb) {
-  this.findElementOrElements(strategy, selector, false, element, cb);
+  if (this.inWebView()) {
+    this.findWebElementOrElements(strategy, selector, false, element, cb);
+  } else {
+    this.findUIElementOrElements(strategy, selector, false, element, cb);
+  }
 };
 
 Android.prototype.findElementsFromElement = function(element, strategy, selector, cb) {
-  this.findElementOrElements(strategy, selector, true, element, cb);
+  if (this.inWebView()) {
+    this.findWebElementOrElements(strategy, selector, true, element, cb);
+  } else {
+    this.findUIElementOrElements(strategy, selector, true, element, cb);
+  }
 };
 
 Android.prototype.setValueImmediate = function(elementId, value, cb) {
@@ -804,8 +812,15 @@ Android.prototype.flick = function(startX, startY, endX, endY, touchCount, elId,
   }
 };
 
-Android.prototype.scrollTo = function(elementId, cb) {
-  cb(new NotYetImplementedError(), null);
+Android.prototype.scrollTo = function(elementId, text, cb) {
+  // instead of the elementId as the element to be scrolled too,
+  // it's the scrollable view to swipe until the uiobject that has the
+  // text is found.
+  var opts = {
+    text: text
+    , elementId: elementId
+  };
+  this.proxy(["element:scrollTo", opts], cb);
 };
 
 Android.prototype.shake = function(cb) {
