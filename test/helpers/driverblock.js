@@ -107,7 +107,7 @@ describeForSafari.only = function() {
 var describeForChrome = function() {
   var fn = function(desc, tests, host, port, extraCaps, onlyify) {
     var caps = {
-      app: 'chromium'
+      app: 'chrome'
       , device: 'Android'
     };
     return describeWithDriver(desc, tests, host, port, caps, extraCaps, undefined, onlyify);
@@ -122,7 +122,7 @@ describeForChrome.only = function() {
   return describeForChrome(true);
 };
 
-var describeForApp = function(app, device, appPackage, appActivity) {
+var describeForApp = function(app, device, appPackage, appActivity, appWaitActivity) {
   if (typeof device === "undefined") {
     device = "ios";
   }
@@ -161,6 +161,9 @@ var describeForApp = function(app, device, appPackage, appActivity) {
     if (typeof appPackage !== "undefined") {
       newExtraCaps['app-package'] = appPackage;
       newExtraCaps['app-activity'] = appActivity;
+      if (typeof appWaitActivity !== "undefined") {
+        newExtraCaps['app-wait-activity'] = appWaitActivity;
+      }
     }
     extraCaps = _.extend(extraCaps, newExtraCaps);
     return describeWithDriver(desc, tests, host, port, caps, extraCaps);
