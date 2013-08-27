@@ -444,8 +444,8 @@ Appium.prototype.unzipApp = function(zipPath, cb) {
 };
 
 Appium.prototype.clearPreviousSession = function() {
-  logger.info("Clearing out any previous sessions");
   if (this.sessionOverride && this.device) {
+    logger.info("Clearing out previous session");
     this.device.stop(function() {
       this.devices = [];
       this.device = null;
@@ -515,6 +515,7 @@ Appium.prototype.invoke = function() {
           , keystorePassword: this.args.keystorePassword
           , keyAlias: this.args.keyAlias
           , keyPassword: this.args.keyPassword
+          , systemPort: this.args.devicePort
         };
         if (this.isChrome()) {
           androidOpts.chromium = this.args.chromium;
@@ -534,7 +535,7 @@ Appium.prototype.invoke = function() {
           , avdName: this.args.avd
           , appDeviceReadyTimeout: this.args.androidDeviceReadyTimeout
           , reset: !this.args.noReset
-          , port: this.args.selendroidPort
+          , systemPort: this.args.selendroidPort
           , fastReset: this.fastReset
           , useKeystore: this.args.useKeystore
           , keystorePath: this.args.keystorePath
@@ -608,14 +609,16 @@ Appium.prototype.onDeviceDie = function(code, cb) {
   } else {
     logger.info('Not clearing out appium devices');
   }
-  if (cb) {
-    cb(null, {status: status.codes.Success.code, value: null,
-              sessionId: dyingSession});
-  }
+
   // if we're not restarting internally, call invoke again, in case we have
   // sessions queued
   if (!this.resetting) {
     this.clearPreviousSession();
+  }
+
+  if (cb) {
+    cb(null, {status: status.codes.Success.code, value: null,
+      sessionId: dyingSession});
   }
 };
 

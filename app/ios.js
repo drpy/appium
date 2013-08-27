@@ -23,6 +23,7 @@ var path = require('path')
   , IDevice = require('node-idevice')
   , async = require('async')
   , request = require('request')
+  , mkdirp = require('mkdirp')
   , NotImplementedError = errors.NotImplementedError
   , NotYetImplementedError = errors.NotYetImplementedError
   , UnknownError = errors.UnknownError;
@@ -265,7 +266,7 @@ IOS.prototype.installToRealDevice = function (cb) {
           cb();
         }
       }.bind(this),
-      function (cb) { d.installAndWait(this.ipa, this.bundleId, cb); }
+      function (cb) { d.installAndWait(this.ipa, this.bundleId, cb); }.bind(this)
     ], cb);
   } else {
     logger.debug("No device id or app, not installing to real device.");
@@ -395,7 +396,7 @@ IOS.prototype.cleanupAppState = function(cb) {
               logger.info("Removed " + this.bundleId);
               cb();
             }
-          });
+          }.bind(this));
         } else {
           cb();
         }
@@ -1380,8 +1381,8 @@ IOS.prototype.getPageSource = function(cb) {
 
 IOS.prototype.getPageSourceXML = IOS.prototype.getPageSource;
 
-IOS.prototype.waitForPageLoad = function(cb) {
-  this.proxy("au.waitForPageLoad()", cb);
+IOS.prototype.waitForPageLoad = function(timeout, cb) {
+  this.proxy("au.waitForPageLoad(" + timeout + ")", cb);
 };
 
 IOS.prototype.getAlertText = function(cb) {
@@ -1423,11 +1424,42 @@ IOS.prototype.setOrientation = function(orientation, cb) {
   }.bind(this));
 };
 
+IOS.prototype.localScreenshot = function(desiredFile, cb) {
+  // Instruments automatically adds .png
+  var screenshotFolder = "/tmp/appium-instruments/Run 1/";
+  var filename = path.basename(desiredFile, path.extname(desiredFile));
+  var command = "au.capture('" + filename + "')";
+  var filePath = screenshotFolder + filename;
+
+  // Must delete the png if it exists or instruments will
+  // add a sequential integer to the file name.
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+  async.series([
+    function (cb) { this.proxy(command, cb); }.bind(this),
+    function (cb) {
+      // must exist or rename will fail.
+      var desiredFolder = path.dirname(desiredFile);
+      mkdirp.sync(desiredFolder);
+      fs.rename(filePath + ".png", desiredFile, cb);
+    }.bind(this),
+  ], function(){
+    cb(null, {
+       status: status.codes.Success.code
+     });
+  });
+};
+
 IOS.prototype.getScreenshot = function(cb) {
   var guid = uuid.create();
   var command = ["au.capture('screenshot", guid ,"')"].join('');
 
-  var shotPath = ["/tmp/", this.instruments.guid, "/Run 1/screenshot", guid, ".png"].join("");
+  var screenshotFolder = "/tmp/appium-instruments/Run 1/";
+  if (!fs.existsSync(screenshotFolder)) {
+    mkdirp.sync(screenshotFolder);
+  }
+
+  var shotPath = [screenshotFolder, 'screenshot', guid, ".png"].join("");
   this.proxy(command, function(err, response) {
     if (err) {
       cb(err, response);
@@ -1992,19 +2024,39 @@ IOS.prototype.getCurrentActivity= function(cb) {
   cb(new NotYetImplementedError(), null);
 };
 
+IOS.prototype.getLogs = function(logType, cb) {
+  cb(new NotYetImplementedError(), null);
+};
+
+IOS.prototype.getLogTypes = function(cb) {
+  cb(new NotYetImplementedError(), null);
+};
+
 IOS.prototype.isAppInstalled = function(bundleId, cb) {
-  var isInstalledCommand = 'build/fruitstrap/fruitstrap isInstalled --id ' + this.udid + ' --bundle ' + bundleId;
-  deviceCommon.isAppInstalled(isInstalledCommand, cb);
+  if (this.udid) {
+      var isInstalledCommand = 'build/fruitstrap/fruitstrap isInstalled --id ' + this.udid + ' --bundle ' + bundleId;
+      deviceCommon.isAppInstalled(isInstalledCommand, cb);
+  } else {
+    cb(new Error("You can not call isInstalled for the iOS simulator!"));
+  }
 };
 
 IOS.prototype.removeApp = function(bundleId, cb) {
-  var removeCommand = 'build/fruitstrap/fruitstrap uninstall --id ' + this.udid + ' --bundle ' + bundleId;
-  deviceCommon.removeApp(removeCommand, this.udid, bundleId, cb);
+  if (this.udid) {
+    var removeCommand = 'build/fruitstrap/fruitstrap uninstall --id ' + this.udid + ' --bundle ' + bundleId;
+    deviceCommon.removeApp(removeCommand, this.udid, bundleId, cb);
+  } else {
+    cb(new Error("You can not call removeApp for the iOS simulator!"));
+  }
 };
 
 IOS.prototype.installApp = function(unzippedAppPath, cb) {
-  var installationCommand = 'build/fruitstrap/fruitstrap install --id ' + this.udid + ' --bundle ' + unzippedAppPath;
-  deviceCommon.installApp(installationCommand, this.udid, unzippedAppPath, cb);
+  if (this.udid) {
+    var installationCommand = 'build/fruitstrap/fruitstrap install --id ' + this.udid + ' --bundle ' + unzippedAppPath;
+    deviceCommon.installApp(installationCommand, this.udid, unzippedAppPath, cb);
+  } else {
+    cb(new Error("You can not call installApp for the iOS simulator!"));
+  }
 };
 
 IOS.prototype.unpackApp = function(req, cb) {

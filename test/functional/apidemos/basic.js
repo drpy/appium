@@ -60,6 +60,35 @@ describeWd('basic', function(h) {
       done();
     });
   });
+  it('should be able to get logcat log type', function(done) {
+    h.driver.logTypes(function(err, logTypes) {
+      should.not.exist(err);
+      logTypes.should.include('logcat');
+      done();
+    });
+  });
+  it('should be able to get logcat logs', function(done) {
+    h.driver.log('logcat', function(err, logs) {
+      should.not.exist(err);
+      logs.length.should.be.above(0);
+      logs[0].message.should.not.include("\n");
+      logs[0].level.should.equal("ALL");
+      should.exist(logs[0].timestamp);
+      done();
+    });
+  });
+  it('should be able to detect if app is installed', function(done) {
+    h.driver.execute('mobile: isAppInstalled', [{bundleId: 'foo'}], function(err, isInstalled) {
+      should.not.exist(err);
+      isInstalled.should.equal(false);
+      h.driver.execute('mobile: isAppInstalled', [{bundleId: 'com.example.android.apis'}],
+        function(err, isInstalled) {
+          should.not.exist(err);
+          isInstalled.should.equal(true);
+          done();
+      });
+    });
+  });
 });
 
 describeWd2('activity style: no period', function(h) {
