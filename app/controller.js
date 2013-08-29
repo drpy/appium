@@ -304,6 +304,30 @@ exports.mobileFlick = function(req, res) {
   }
 };
 
+exports.mobileDrag = function(req, res) {
+  req.body = _.defaults(req.body, {
+    startX: 0.5
+    , startY: 0.5
+    , endX: 0.5
+    , endY: 0.5
+    , steps: 40
+    , element: null
+    , destEl: null
+  });
+  var element = req.body.element
+    , destEl = req.body.destEl
+    , startX = req.body.startX
+    , startY = req.body.startY
+    , endX = req.body.endX
+    , endY = req.body.endY
+    , steps = req.body.steps;
+
+  if (checkMissingParams(res, {startX: startX, startY: startY, endX: endX, endY: endY})) {
+    req.device.drag(startX, startY, endX, endY, steps, element, destEl,
+        getResponseHandler(req, res));
+  }
+};
+
 exports.mobileSource = function(req, res) {
   var type = req.body.type;
 
@@ -516,7 +540,6 @@ exports.getCssProperty = function(req, res) {
 
 exports.getLocation = function(req, res) {
   var elementId = req.params.elementId;
-
   req.device.getLocation(elementId, getResponseHandler(req, res));
 };
 
@@ -906,6 +929,7 @@ exports.localScreenshot = function(req, res) {
 exports.notYetImplemented = notYetImplemented;
 var mobileCmdMap = {
   'tap': exports.mobileTap
+  , 'drag': exports.mobileDrag
   , 'flick': exports.mobileFlick
   , 'swipe': exports.mobileSwipe
   , 'scrollTo': exports.mobileScrollTo

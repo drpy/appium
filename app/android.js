@@ -475,7 +475,7 @@ Android.prototype.getLocation = function(elementId, cb) {
 };
 
 Android.prototype.getSize = function(elementId, cb) {
-  cb(new NotYetImplementedError(), null);
+  this.proxy(["element:getSize", {elementId: elementId}], cb);
 };
 
 Android.prototype.getWindowSize = function(windowHandle, cb) {
@@ -809,6 +809,24 @@ Android.prototype.flick = function(startX, startY, endX, endY, touchCount, elId,
     this.proxy(["element:swipe", swipeOpts], cb);
   } else {
     this.proxy(["swipe", swipeOpts], cb);
+  }
+};
+
+Android.prototype.drag = function(startX, startY, endX, endY, steps, elementId, destElId, cb) {
+  var dragOpts = {
+    elementId: elementId
+    , destElId: destElId
+    , startX: startX
+    , startY: startY
+    , endX: endX
+    , endY: endY
+    , steps: steps
+  };
+
+  if (elementId !== null) {
+    this.proxy(["element:drag", dragOpts], cb);
+  } else {
+    this.proxy(["drag", dragOpts], cb);
   }
 };
 

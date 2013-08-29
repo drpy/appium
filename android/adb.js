@@ -90,7 +90,9 @@ ADB.prototype.checkSdkBinaryPresent = function(binary, cb) {
     var binaryLocs = [ path.resolve(this.sdkRoot, "platform-tools", binaryName)
         , path.resolve(this.sdkRoot, "tools", binaryName)
         , path.resolve(this.sdkRoot, "build-tools", "17.0.0", binaryName)
-        , path.resolve(this.sdkRoot, "build-tools", "android-4.2.2", binaryName)];
+        , path.resolve(this.sdkRoot, "build-tools", "android-4.2.2", binaryName)
+        , path.resolve(this.sdkRoot, "build-tools", "18.0.1", binaryName)
+        , path.resolve(this.sdkRoot, "build-tools", "android-4.3", binaryName)];
     _.each(binaryLocs, function(loc) {
       if (fs.existsSync(loc)) binaryLoc = loc;
     });
@@ -207,29 +209,17 @@ ADB.prototype.insertSelendroidManifest = function(serverPath, cb) {
 
 ADB.prototype.compileManifest = function(manifest, manifestPackage, targetPackage, cb) {
   logger.info("Compiling manifest " + manifest);
-  var androidHome = process.env.ANDROID_HOME;
 
-  if (typeof androidHome !== "string") {
-    return cb(new Error("ANDROID_HOME was not exported!"));
-  }
-
-  var platforms = path.resolve(androidHome , 'platforms')
-    , platform = 'android-17';
-
-  // android-17 may be called android-4.2
-  if (!fs.existsSync(path.resolve(platforms, platform))) {
-    platform = 'android-4.2';
-
-    if (!fs.existsSync(path.resolve(platforms, platform))) {
-      return cb(new Error("Platform doesn't exist " + platform));
-    }
+  var platform = helpers.getAndroidPlatform();
+  if (!platform || !platform[1]) {
+    return cb(new Error("Required platform doesn't exist (API level >= 17)"));
   }
 
   // Compile manifest into manifest.xml.apk
   var compileManifest = [this.binaries.aapt + ' package -M "', manifest + '"',
                          ' --rename-manifest-package "',  manifestPackage + '"',
                          ' --rename-instrumentation-target-package "', targetPackage + '"',
-                         ' -I "', path.resolve(platforms, platform, 'android.jar') +'" -F "',
+                         ' -I "', path.resolve(platform[1], 'android.jar') +'" -F "',
                          manifest, '.apk" -f'].join('');
   logger.debug(compileManifest);
   exec(compileManifest, { maxBuffer: 524288 }, function(err, stdout, stderr) {
